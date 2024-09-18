@@ -4,6 +4,7 @@ import re
 import shutil
 import sys
 import zipfile
+import time
 from multiprocessing.dummy import Pool as ThreadPool
 from pathlib import Path
 
@@ -198,7 +199,7 @@ class TranslatorEngine():
                                     for p in list(Path(self.file_extracted_path).rglob(file_type))]
 
     def multithreads_html_translate(self):
-        pool = ThreadPool(8)
+        pool = ThreadPool(4)
         try:
             for _ in tqdm.tqdm(pool.imap_unordered(self.translate_html, self.html_list_path), total=len(self.html_list_path), desc='Translating'):
                 pass
@@ -270,6 +271,7 @@ class TranslatorEngine():
 
     def translate_text(self, text):
         translator = google_translator(timeout=15)
+        time.sleep(1)  # Add a delay between requests   
         if type(text) is not str:
             translate_text = ''
             for substr in text:
