@@ -7,9 +7,20 @@ def translate_file(input_file_path, target_language):
     translator = google_translator(timeout=10)
 
     try:
-        # Read the content of the input file
-        with open(input_file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
+        # Try reading the file with different encodings
+        encodings = ['utf-8', 'ISO-8859-1', 'windows-1252']
+        content = ""
+        
+        for encoding in encodings:
+            try:
+                with open(input_file_path, 'r', encoding=encoding) as file:
+                    content = file.read()
+                break  # Exit loop if read is successful
+            except UnicodeDecodeError:
+                continue  # Try next encoding if error occurs
+
+        if not content:
+            raise ValueError("Unable to decode the file with supported encodings.")
 
         # Translate the content
         translated_content = translator.translate(content, lang_tgt=target_language)
