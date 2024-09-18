@@ -231,4 +231,16 @@ class TranslatorEngine():
                     if nextpos < len(translated_text):
                         content = self.replace_translation_dict(
                             translated_text[nextpos])
-                        
+
+def start(self, file_path):
+    print(f"Starting translation process for {file_path}")
+    self.get_epub_file_info(file_path)
+    if self.extract_epub():
+        print("EPUB extraction completed.")
+        self.get_epub_html_path()
+        print(f"Found {len(self.html_list_path)} HTML files to translate.")
+        self.multithreads_html_translate()
+        print("Translation completed.")
+        self.zip_epub()
+
+
