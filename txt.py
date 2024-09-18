@@ -2,6 +2,10 @@ import argparse
 from google_trans_new import google_translator
 import os
 
+def split_text(text, max_length=5000):
+    """Split text into chunks of max_length characters."""
+    return [text[i:i + max_length] for i in range(0, len(text), max_length)]
+
 def translate_file(input_file_path, target_language):
     # Initialize the translator
     translator = google_translator(timeout=10)
@@ -22,8 +26,16 @@ def translate_file(input_file_path, target_language):
         if not content:
             raise ValueError("Unable to decode the file with supported encodings.")
 
-        # Translate the content
-        translated_content = translator.translate(content, lang_tgt=target_language)
+        # Split content into chunks and translate
+        chunks = split_text(content)
+        translated_chunks = []
+
+        for chunk in chunks:
+            translated_chunk = translator.translate(chunk, lang_tgt=target_language)
+            translated_chunks.append(translated_chunk)
+        
+        # Join translated chunks
+        translated_content = ''.join(translated_chunks)
 
         # Define the output file path
         base, _ = os.path.splitext(input_file_path)
@@ -46,3 +58,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     translate_file(args.input_file, args.target_language)
+    
