@@ -4,10 +4,8 @@ import re
 import shutil
 import sys
 import zipfile
-import time
 from multiprocessing.dummy import Pool as ThreadPool
 from pathlib import Path
-from random import randint
 
 import requests
 import tqdm
@@ -174,7 +172,6 @@ class TranslatorEngine():
         self.translation_dict_file_path = ''
         self.dict_format = '^[^:]+:[^:]+$'
         self.max_trans_words = 5e3
-        self.max_retries = 5  # Set the default max retries
 
     def get_epub_file_info(self, file_path):
         self.file_path = file_path
@@ -199,17 +196,6 @@ class TranslatorEngine():
         for file_type in ['*.[hH][tT][mM][lL]', '*.[xX][hH][tT][mM][lL]', '*.[hH][tT][mM]']:
             self.html_list_path += [str(p.resolve())
                                     for p in list(Path(self.file_extracted_path).rglob(file_type))]
-
-def start(self, file_path):
-    print(f"Starting translation process for {file_path}")  # Indented correctly (4 spaces or a tab)
-    self.get_epub_file_info(file_path)
-    if self.extract_epub():
-        print("EPUB extraction completed.")
-        self.get_epub_html_path()
-        print(f"Found {len(self.html_list_path)} HTML files to translate.")
-        self.multithreads_html_translate()
-        print("Translation completed.")
-        self.zip_epub()
 
     def multithreads_html_translate(self):
         pool = ThreadPool(8)
@@ -242,3 +228,174 @@ def start(self, file_path):
                     if nextpos < len(translated_text):
                         content = self.replace_translation_dict(
                             translated_text[nextpos])
+                        ele.replace_with(element.NavigableString(content))
+
+            with open(html_file, "w", encoding="utf-8") as w:
+                w.write(str(soup))
+            w.close()
+        f.close()
+
+    def replace_translation_dict(self, text):
+        if self.translation_dict:
+            for replace_text in self.translation_dict.keys():
+                if replace_text in text:
+                    text = text.replace(
+                        replace_text, self.translation_dict[replace_text])
+        return text
+
+    def get_translation_dict_contents(self):
+        if os.path.isfile(self.translation_dict_file_path) and self.translation_dict_file_path.endswith('.txt'):
+            print('Translation dictionary detected.')
+            with open(self.translation_dict_file_path, encoding='utf-8') as f:
+                for line in f.readlines():
+                    if re.match(self.dict_format, line):
+                        split = line.rstrip().split(':')
+                        self.translation_dict[split[0]] = split[1]
+                    else:
+                        print(
+                            f'Translation dictionary is not in correct format: {line}')
+                        return False
+            f.close()
+        else:
+            print('Translation dictionary file path is incorrect!')
+            return False
+        return True
+
+    def translate_tag(self, text_list):
+        combined_contents = self.combine_words(text_list)
+        translated_contents = self.multithreads_translate(combined_contents)
+        extracted_contents = self.extract_words(translated_contents)
+
+        return extracted_contents
+
+    def translate_text(self, text):
+        translator = google_translator(timeout=10)
+        if type(text) is not str:
+            translate_text = ''
+            for substr in text:
+                translate_substr = translator.translate(substr, self.dest_lang)
+                translate_text += translate_substr
+        else:
+            translate_text = translator.translate(text, self.dest_lang)
+        return translate_text
+
+    def multithreads_translate(self, text_list):
+        results = []
+        pool = ThreadPool(4)
+        try:
+            results = pool.map(self.translate_text, text_list)
+        except Exception:
+            print(f'Translating epub: [{pcolors.FAIL} FAIL {pcolors.ENDC}]')
+            raise
+        pool.close()
+        pool.join()
+        return results
+
+    def combine_words(self, text_list):
+        combined_text = []
+        combined_single = ''
+        for text in text_list:
+            combined_single_prev = combined_single
+            if combined_single:
+                combined_single += '\n-----\n' + text
+            else:
+                combined_single = text
+            if len(combined_single) >= self.max_trans_words:
+                combined_text.append(combined_single_prev)
+                combined_single = '\n-----\n' + text
+        combined_text.append(combined_single)
+        return combined_text
+
+    def extract_words(self, text_list):
+        extracted_text = []
+        for text in text_list:
+            extract = text.split('-----')
+            extracted_text += extract
+        return extracted_text
+
+    def zip_epub(self):
+        print('Making the translated epub file...', end='\r')
+        try:
+            # zipf = zipfile.ZipFile(
+            #     self.file_extracted_path + '.epub', 'w', zipfile.ZIP_DEFLATED)
+            # self.zipdir(self.file_extracted_path, zipf)
+            # zipf.writestr("mimetype", "application/epub+zip")
+            # zipf.close()
+
+            filename = f"{self.file_extracted_path}.epub"
+            file_extracted_absolute_path = Path(self.file_extracted_path)
+
+            with open(str(file_extracted_absolute_path / 'mimetype'), 'w') as file:
+                file.write('application/epub+zip')
+            with zipfile.ZipFile(filename, 'w') as archive:
+                archive.write(
+                    str(file_extracted_absolute_path / 'mimetype'), 'mimetype',
+                    compress_type=zipfile.ZIP_STORED)
+                for file in file_extracted_absolute_path.rglob('*.*'):
+                    archive.write(
+                        str(file), str(file.relative_to(
+                            file_extracted_absolute_path)),
+                        compress_type=zipfile.ZIP_DEFLATED)
+
+            shutil.rmtree(self.file_extracted_path)
+            print(
+                f'Making the translated epub file: [{pcolors.GREEN} DONE {pcolors.ENDC}]')
+        except Exception as e:
+            print(e)
+            print(
+                f'Making the translated epub file: [{pcolors.FAIL} FAIL {pcolors.ENDC}]')
+
+    def zipdir(self, path, ziph):
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                ziph.write(os.path.join(root, file),
+                           os.path.relpath(os.path.join(root, file),
+                                           os.path.join(path, self.file_name + '_translated' + '\.')))
+
+    def start(self, file_path):
+        self.get_epub_file_info(file_path)
+        if self.extract_epub():
+            self.get_epub_html_path()
+            self.multithreads_html_translate()
+            self.zip_epub()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='A tool for translating epub files to different languages using the Google Translate, with support for custom dictionaries.')
+    parser.add_argument('-v', '--version', action='version',
+                        version='epub-translator v%s' % tool_version)
+    parser.add_argument('epub_file_path', type=str,
+                        help='path to the epub file')
+    parser.add_argument('-l', '--lang', type=str, metavar='dest_lang',
+                        help='destination language')
+    parser.add_argument('-d', '--dict', type=str, metavar='dict_path',
+                        help='path to the translation dictionary')
+    args = parser.parse_args()
+
+    engine = TranslatorEngine()
+
+    check_for_tool_updates()
+
+    if args.lang and args.lang not in LANGUAGES.keys():
+        print('Can not find destination language: ' + args.lang)
+        sys.exit()
+    elif args.lang:
+        engine.dest_lang = args.lang
+
+    if args.dict:
+        translation_dict_file_path = args.dict.replace(
+            '&', '').replace('\'', '').replace('\"', '').strip()
+        engine.translation_dict_file_path = os.path.abspath(
+            translation_dict_file_path)
+        if not engine.get_translation_dict_contents():
+            sys.exit()
+
+    epub_file_path = args.epub_file_path.replace(
+        '&', '').replace('\'', '').replace('\"', '').strip()
+    epub_abs_file_path = os.path.abspath(epub_file_path)
+    if os.path.isfile(epub_abs_file_path) and epub_abs_file_path.endswith('.epub'):
+        engine.start(epub_abs_file_path)
+    else:
+        print('Epub file path is incorrect!')
+        sys.exit()
