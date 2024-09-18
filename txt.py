@@ -19,16 +19,19 @@ def translate_text(text, translator, retries=3):
             time.sleep(5)  # Wait before retrying
     raise Exception("Failed to connect after several attempts")
 
-def read_file_with_fallback(file_path, encodings):
+def read_file_binary(file_path):
+    with open(file_path, 'rb') as f:
+        return f.read()
+
+def decode_text(binary_data, encodings):
     for encoding in encodings:
         try:
-            with open(file_path, 'r', encoding=encoding) as f:
-                return f.read()
+            return binary_data.decode(encoding)
         except UnicodeDecodeError:
-            print(f"Failed to read with encoding: {encoding}")
+            print(f"Failed to decode with encoding: {encoding}")
         except Exception as e:
             print(f"An error occurred: {e}")
-    raise Exception("All encoding attempts failed")
+    raise Exception("All decoding attempts failed")
 
 def translate_file(input_file, output_file):
     translator = google_translator(timeout=10)
@@ -40,8 +43,11 @@ def translate_file(input_file, output_file):
     # Define a list of possible encodings
     possible_encodings = [encoding, 'utf-8', 'gbk', 'latin1']
 
-    # Read the content from the input file
-    text = read_file_with_fallback(input_file, possible_encodings)
+    # Read the content from the input file in binary mode
+    binary_data = read_file_binary(input_file)
+
+    # Attempt to decode the binary data with different encodings
+    text = decode_text(binary_data, possible_encodings)
 
     # Show progress bar for translation
     print("Translating...")
