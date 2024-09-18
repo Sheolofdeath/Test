@@ -19,15 +19,29 @@ def translate_text(text, translator, retries=3):
             time.sleep(5)  # Wait before retrying
     raise Exception("Failed to connect after several attempts")
 
+def read_file_with_fallback(file_path, encodings):
+    for encoding in encodings:
+        try:
+            with open(file_path, 'r', encoding=encoding) as f:
+                return f.read()
+        except UnicodeDecodeError:
+            print(f"Failed to read with encoding: {encoding}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+    raise Exception("All encoding attempts failed")
+
 def translate_file(input_file, output_file):
     translator = google_translator(timeout=10)
-
+    
     # Detect file encoding
     encoding = detect_encoding(input_file)
-    
+    print(f"Detected encoding: {encoding}")
+
+    # Define a list of possible encodings
+    possible_encodings = [encoding, 'utf-8', 'gbk', 'latin1']
+
     # Read the content from the input file
-    with open(input_file, 'r', encoding=encoding) as f:
-        text = f.read()
+    text = read_file_with_fallback(input_file, possible_encodings)
 
     # Show progress bar for translation
     print("Translating...")
@@ -49,3 +63,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     translate_file(args.input_file, args.output_file)
+    
