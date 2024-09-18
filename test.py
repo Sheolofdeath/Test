@@ -239,5 +239,11 @@ if __name__ == "__main__":
             sys.exit()
 
     # Process all EPUB files in the specified directory
-    dir_path = args.directory.replace('&
+    dir_path = args.directory.replace('&', '').replace('\'', '').replace('\"', '').strip()
+    
+    if os.path.isdir(dir_path):
+        engine.start(dir_path)
+    else:
+        print(f'The specified path is not a valid directory: {dir_path}')
+        sys.exit()
                   
