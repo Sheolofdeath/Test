@@ -298,9 +298,9 @@ class TranslatorEngine():
             try:
                 return translator.translate(text, self.dest_lang)
             except Exception as e:
-                print(f"Error occurred: {e}. Retrying...")
-            
-    return text  # Return original text if translation fails
+                print(f"Error occurred: {e}. Retrying...")           
+        return text  # Return original text if translation fails
+    
     def combine_words(self, text_list):
         combined_text = []
         combined_single = ''
