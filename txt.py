@@ -2,6 +2,13 @@ import argparse
 import time
 from google_trans_new import google_translator
 from tqdm import tqdm
+import chardet
+
+def detect_encoding(file_path):
+    with open(file_path, 'rb') as f:
+        raw_data = f.read(10000)  # Read the first 10000 bytes
+        result = chardet.detect(raw_data)
+        return result['encoding']
 
 def translate_text(text, translator, retries=3):
     for attempt in range(retries):
@@ -14,19 +21,22 @@ def translate_text(text, translator, retries=3):
 
 def translate_file(input_file, output_file):
     translator = google_translator(timeout=10)
+
+    # Detect file encoding
+    encoding = detect_encoding(input_file)
     
     # Read the content from the input file
-    with open(input_file, 'r', encoding='utf-8') as f:
+    with open(input_file, 'r', encoding=encoding) as f:
         text = f.read()
-    
+
     # Show progress bar for translation
     print("Translating...")
     translated_text = ""
-    
+
     # Simulate progress for large text
     for _ in tqdm(range(1), desc="Progress"):
         translated_text = translate_text(text, translator)
-    
+
     # Write the translated content to the output file
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(translated_text)
