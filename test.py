@@ -200,8 +200,8 @@ class TranslatorEngine():
             self.html_list_path += [str(p.resolve())
                                     for p in list(Path(self.file_extracted_path).rglob(file_type))]
 
-    def start(self, file_path):
-    print(f"Starting translation process for {file_path}")
+def start(self, file_path):
+    print(f"Starting translation process for {file_path}")  # Indented correctly (4 spaces or a tab)
     self.get_epub_file_info(file_path)
     if self.extract_epub():
         print("EPUB extraction completed.")
@@ -210,7 +210,7 @@ class TranslatorEngine():
         self.multithreads_html_translate()
         print("Translation completed.")
         self.zip_epub()
-    
+
     def multithreads_html_translate(self):
         pool = ThreadPool(8)
         try:
