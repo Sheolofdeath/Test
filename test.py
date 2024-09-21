@@ -330,38 +330,37 @@ class TranslatorEngine():
             extracted_text += extract
         return extracted_text
 
-     def zip_epub(self):
-         print('Making the translated epub file...', end='\r')
-         try:
-             # Define the translated folder path
-             translated_folder = os.path.join(os.path.dirname(self.file_extracted_path), 'translated')
-             # Create the translated folder if it doesn't exist
-             os.makedirs(translated_folder, exist_ok=True)
+    def zip_epub(self):
+        print('Making the translated epub file...', end='\r')
+        try:
+            # Define the translated folder path
+            translated_folder = os.path.join(os.path.dirname(self.file_extracted_path), 'translated')
+            # Create the translated folder if it doesn't exist
+            os.makedirs(translated_folder, exist_ok=True)
      
-             # Define the output filename inside the translated folder
-             filename = os.path.join(translated_folder, f"{self.file_name}_translated.epub")
-             file_extracted_absolute_path = Path(self.file_extracted_path)
+            # Define the output filename inside the translated folder
+            filename = os.path.join(translated_folder, f"{self.file_name}_translated.epub")
+            file_extracted_absolute_path = Path(self.file_extracted_path)
 
-             with open(str(file_extracted_absolute_path / 'mimetype'), 'w') as file:
-                 file.write('application/epub+zip')
-             with zipfile.ZipFile(filename, 'w') as archive:
-                 archive.write(
-                     str(file_extracted_absolute_path / 'mimetype'), 'mimetype',
-                     compress_type=zipfile.ZIP_STORED)
-                 for file in file_extracted_absolute_path.rglob('*.*'):
-                     archive.write(
-                         str(file), str(file.relative_to(
-                             file_extracted_absolute_path)),
-                         compress_type=zipfile.ZIP_DEFLATED)
+            with open(str(file_extracted_absolute_path / 'mimetype'), 'w') as file:
+                file.write('application/epub+zip')
+            with zipfile.ZipFile(filename, 'w') as archive:
+                archive.write(
+                    str(file_extracted_absolute_path / 'mimetype'), 'mimetype',
+                    compress_type=zipfile.ZIP_STORED)
+                for file in file_extracted_absolute_path.rglob('*.*'):
+                    archive.write(
+                        str(file), str(file.relative_to(
+                            file_extracted_absolute_path)),
+                        compress_type=zipfile.ZIP_DEFLATED)
 
-             shutil.rmtree(self.file_extracted_path)
-             print(
-                 f'Making the translated epub file: [{pcolors.GREEN} DONE {pcolors.ENDC}]')
-         except Exception as e:
-             print(e)
-             print(
+            shutil.rmtree(self.file_extracted_path)
+            print(
+                f'Making the translated epub file: [{pcolors.GREEN} DONE {pcolors.ENDC}]')
+        except Exception as e:
+            print(e)
+            print(
                  f'Making the translated epub file: [{pcolors.FAIL} FAIL {pcolors.ENDC}]')
-
 
     def zipdir(self, path, ziph):
         for root, dirs, files in os.walk(path):
