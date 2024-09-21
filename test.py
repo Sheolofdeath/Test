@@ -182,16 +182,22 @@ class TranslatorEngine():
 
     def extract_epub(self):
         try:
-            with zipfile.ZipFile(self.file_path, 'r') as zip:
+            with zipfile.ZipFile(self.file_path, 'r') as zip_ref:
                 print('Extracting the epub file...', end='\r')
-                zip.extractall(self.file_extracted_path)
-                print(
-                    f'Extracting the epub file: [{pcolors.GREEN} DONE {pcolors.ENDC}]')
+            zip_ref.testzip()  # Test the integrity of the ZIP file
+            zip_ref.extractall(self.file_extracted_path)
+                print(f'Extracting the epub file: [{pcolors.GREEN} DONE {pcolors.ENDC}]')
             return True
-        except Exception:
-            print(
-                f'Extracting the epub file: [{pcolors.FAIL} FAIL {pcolors.ENDC}]')
-            return False
+        except zipfile.BadZipFile:
+            print(f'Extracting the epub file: [{pcolors.FAIL} Bad ZIP File {pcolors.ENDC}]')
+        except FileNotFoundError:
+            print(f'Extracting the epub file: [{pcolors.FAIL} File Not Found {pcolors.ENDC}]')
+        except PermissionError:
+            print(f'Extracting the epub file: [{pcolors.FAIL} Permission Denied {pcolors.ENDC}]')
+        except Exception as e:
+            print(f'Extracting the epub file: [{pcolors.FAIL} FAIL: {e} {pcolors.ENDC}]')
+        return False
+
 
     def get_epub_html_path(self):
         for file_type in ['*.[hH][tT][mM][lL]', '*.[xX][hH][tT][mM][lL]', '*.[hH][tT][mM]']:
