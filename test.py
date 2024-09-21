@@ -184,8 +184,8 @@ class TranslatorEngine():
         try:
             with zipfile.ZipFile(self.file_path, 'r') as zip_ref:
                 print('Extracting the epub file...', end='\r')
-            zip_ref.testzip()  # Test the integrity of the ZIP file
-            zip_ref.extractall(self.file_extracted_path)
+                zip_ref.testzip()  # Test the integrity of the ZIP file
+                zip_ref.extractall(self.file_extracted_path)
                 print(f'Extracting the epub file: [{pcolors.GREEN} DONE {pcolors.ENDC}]')
             return True
         except zipfile.BadZipFile:
@@ -197,7 +197,6 @@ class TranslatorEngine():
         except Exception as e:
             print(f'Extracting the epub file: [{pcolors.FAIL} FAIL: {e} {pcolors.ENDC}]')
         return False
-
 
     def get_epub_html_path(self):
         for file_type in ['*.[hH][tT][mM][lL]', '*.[xX][hH][tT][mM][lL]', '*.[hH][tT][mM]']:
