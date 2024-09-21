@@ -330,16 +330,16 @@ class TranslatorEngine():
             extracted_text += extract
         return extracted_text
 
-    def zip_epub(self):
+        def zip_epub(self):
         print('Making the translated epub file...', end='\r')
         try:
-            # zipf = zipfile.ZipFile(
-            #     self.file_extracted_path + '.epub', 'w', zipfile.ZIP_DEFLATED)
-            # self.zipdir(self.file_extracted_path, zipf)
-            # zipf.writestr("mimetype", "application/epub+zip")
-            # zipf.close()
-
-            filename = f"{self.file_extracted_path}.epub"
+            # Define the translated folder path
+            translated_folder = os.path.join(os.path.dirname(self.file_extracted_path), 'translated')
+            # Create the translated folder if it doesn't exist
+            os.makedirs(translated_folder, exist_ok=True)
+            
+            # Define the output filename inside the translated folder
+            filename = os.path.join(translated_folder, f"{self.file_name}_translated.epub")
             file_extracted_absolute_path = Path(self.file_extracted_path)
 
             with open(str(file_extracted_absolute_path / 'mimetype'), 'w') as file:
