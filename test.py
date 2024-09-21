@@ -187,17 +187,12 @@ class TranslatorEngine():
                 zip_ref.testzip()  # Test the integrity of the ZIP file
                 zip_ref.extractall(self.file_extracted_path)
                 print(f'Extracting the epub file: [{pcolors.GREEN} DONE {pcolors.ENDC}]')
+                print(f'Extracted files: {zip_ref.namelist()}')  # Log extracted files
             return True
-        except zipfile.BadZipFile:
-            print(f'Extracting the epub file: [{pcolors.FAIL} Bad ZIP File {pcolors.ENDC}]')
-        except FileNotFoundError:
-            print(f'Extracting the epub file: [{pcolors.FAIL} File Not Found {pcolors.ENDC}]')
-        except PermissionError:
-            print(f'Extracting the epub file: [{pcolors.FAIL} Permission Denied {pcolors.ENDC}]')
         except Exception as e:
             print(f'Extracting the epub file: [{pcolors.FAIL} FAIL: {e} {pcolors.ENDC}]')
-        return False
-
+            return False    
+    
     def get_epub_html_path(self):
         for file_type in ['*.[hH][tT][mM][lL]', '*.[xX][hH][tT][mM][lL]', '*.[hH][tT][mM]']:
             self.html_list_path += [str(p.resolve())
